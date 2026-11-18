@@ -17,6 +17,7 @@ import (
 	"github.com/linuxsuren/open-img-sync/internal/errs"
 	"github.com/linuxsuren/open-img-sync/internal/server"
 	"github.com/linuxsuren/open-img-sync/internal/store"
+	synceng "github.com/linuxsuren/open-img-sync/internal/sync"
 )
 
 // serve 启动 Web + API 服务。骨架阶段提供 /healthz、/api/version、/api/system/info，
@@ -39,11 +40,15 @@ func serve(args []string) error {
 		return errs.Wrap(errs.CodeMasterKeyFail, "主密钥不可用", err)
 	}
 
+	secrets := store.NewSecretBox(crypt.NewBox(key))
 	db, err := store.Open(*dataDir + string(os.PathSeparator) + "open-img-sync.db")
 	if err != nil {
 		return err
 	}
 	defer db.Close()
+
+	syncEngine := synceng.New(db, secrets, aliyun.NewProvider(secrets),
+		*dataDir+string(os.PathSeparator)+"spool")
 
 	srv := server.New(server.Options{
 		Version:         version,
@@ -54,8 +59,9 @@ func serve(args []string) error {
 		MasterKeySource: keySource,
 	}, server.Deps{
 		DB:      db,
-		Secrets: store.NewSecretBox(crypt.NewBox(key)),
-		Aliyun:  aliyun.NewProvider(store.NewSecretBox(crypt.NewBox(key))),
+		Secrets: secrets,
+		Aliyun:  aliyun.NewProvider(secrets),
+		Sync:    syncEngine,
 	})
 
 	httpSrv := &http.Server{
@@ -80,12 +86,23 @@ func serve(args []string) error {
 	case err := <-errCh:
 		return err
 	case <-ctx.Done():
+		// 优雅退出：停止接收新连接 → 等待在途请求 → 排空运行中的同步任务（有超时上限，#8）
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
 		if err := httpSrv.Shutdown(shutdownCtx); err != nil {
 			return fmt.Errorf("优雅退出失败: %w", err)
 		}
-		slog.Info("server stopped gracefully")
+		drainTimeout := 30 * time.Second
+		if raw := os.Getenv("OIS_SHUTDOWN_DRAIN_TIMEOUT"); raw != "" {
+			if d, err := time.ParseDuration(raw); err == nil && d > 0 {
+				drainTimeout = d
+			}
+		}
+		if syncEngine.Drain(drainTimeout) {
+			slog.Info("server stopped gracefully")
+		} else {
+			slog.Warn("server stopped with running tasks aborted", "drain_timeout", drainTimeout.String())
+		}
 		return nil
 	}
 }
