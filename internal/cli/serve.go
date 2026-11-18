@@ -12,10 +12,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/linuxsuren/open-img-sync/internal/aliyun"
 	"github.com/linuxsuren/open-img-sync/internal/crypt"
 	"github.com/linuxsuren/open-img-sync/internal/errs"
 	"github.com/linuxsuren/open-img-sync/internal/server"
 	"github.com/linuxsuren/open-img-sync/internal/store"
+	synceng "github.com/linuxsuren/open-img-sync/internal/sync"
 )
 
 // serve 启动 Web + API 服务。骨架阶段提供 /healthz、/api/version、/api/system/info，
@@ -38,11 +40,15 @@ func serve(args []string) error {
 		return errs.Wrap(errs.CodeMasterKeyFail, "主密钥不可用", err)
 	}
 
+	secrets := store.NewSecretBox(crypt.NewBox(key))
 	db, err := store.Open(*dataDir + string(os.PathSeparator) + "open-img-sync.db")
 	if err != nil {
 		return err
 	}
 	defer db.Close()
+
+	syncEngine := synceng.New(db, secrets, aliyun.NewProvider(secrets),
+		*dataDir+string(os.PathSeparator)+"spool")
 
 	srv := server.New(server.Options{
 		Version:         version,
@@ -53,7 +59,9 @@ func serve(args []string) error {
 		MasterKeySource: keySource,
 	}, server.Deps{
 		DB:      db,
-		Secrets: store.NewSecretBox(crypt.NewBox(key)),
+		Secrets: secrets,
+		Aliyun:  aliyun.NewProvider(secrets),
+		Sync:    syncEngine,
 	})
 
 	httpSrv := &http.Server{
