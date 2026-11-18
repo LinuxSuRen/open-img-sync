@@ -27,11 +27,24 @@
 - CI 门面与仓库自动化：[#9](https://github.com/LinuxSuRen/open-img-sync/issues/9)
 - 安全基线：凭据加密与错误码规范：[#10](https://github.com/LinuxSuRen/open-img-sync/issues/10)
 
-## 技术形态
+## 技术形态与架构摘要
 
 - 后端 Go，前端 Vue 3 + Vite，构建产物嵌入二进制
 - 单二进制即可运行，同时提供多架构容器镜像（GHCR）
-- CLI 提供 `serve` 与 `version` 子命令
+- CLI 提供 `serve` 与 `version` 子命令；无参数执行等价于 `serve`
+- 拉取层：纯 Go 直连 Docker Registry V2 API（manifest + blob 流式转发），不依赖本机 Docker daemon
+- 同步双模式：M1 SSH 直推（默认，流式组装 `docker load` 管道）/ M2 中转 registry
+- 存储：bbolt 单文件，所有凭据 AES-256-GCM 加密落盘
+
+架构决策（拉取位置、传输模式、模块划分、存储选型）与理由见 [docs/architecture.md](docs/architecture.md)；接口契约见 [docs/api-contract.md](docs/api-contract.md)；错误码段位表见 [docs/error-codes.md](docs/error-codes.md)。
+
+## 开发
+
+```bash
+make build    # 纯 Go 环境：编译 bin/open-img-sync（前端产物已提交，无需 Node）
+make test     # go test -race ./...
+make web      # 需要 Node 20+：构建前端
+```
 
 ## 协作约定
 
