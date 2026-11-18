@@ -8,7 +8,7 @@ import (
 )
 
 func TestHealthz(t *testing.T) {
-	srv := New(Options{Version: "test"})
+	srv := New(Options{Version: "test"}, Deps{})
 	rec := httptest.NewRecorder()
 	srv.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
 	if rec.Code != http.StatusOK {
@@ -24,7 +24,7 @@ func TestHealthz(t *testing.T) {
 }
 
 func TestVersion(t *testing.T) {
-	srv := New(Options{Version: "v0.0.1", Commit: "abc1234", BuildTime: "2026-01-01T00:00:00Z"})
+	srv := New(Options{Version: "v0.0.1", Commit: "abc1234", BuildTime: "2026-01-01T00:00:00Z"}, Deps{})
 	rec := httptest.NewRecorder()
 	srv.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/version", nil))
 	if rec.Code != http.StatusOK {
