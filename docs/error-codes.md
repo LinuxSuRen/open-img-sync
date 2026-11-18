@@ -36,10 +36,10 @@
 | 3002 | registry | registry 认证失败 | 生效（internal/registry） |
 | 3003 | registry | 目标不是 registry 服务 | 生效（internal/registry） |
 | 3004 | registry | 镜像引用不合法 | 生效（internal/registry） |
-| 4001 | 同步引擎 | 源 registry 认证失败 | 规划 |
-| 4002 | 同步引擎 | 传输中断 | 规划 |
-| 4003 | 同步引擎 | 目标机磁盘已满 | 规划 |
-| 4004 | 同步引擎 | 目标机加载镜像失败 | 规划 |
-| 4005 | 同步引擎 | 任务已取消 | 规划 |
-| 4006 | 同步引擎 | 部分目标失败 | 规划 |
-| 4007 | 同步引擎 | 推送中转 registry 失败 | 规划 |
+| 4001 | 同步引擎 | 源 registry 认证失败 | 生效（internal/sync） |
+| 4002 | 同步引擎 | 传输中断 | 生效（internal/sync、internal/registry） |
+| 4003 | 同步引擎 | 目标机磁盘已满 | 生效（internal/sshx 流式会话归因） |
+| 4004 | 同步引擎 | 目标机加载镜像失败 | 生效（internal/sshx 流式会话归因） |
+| 4005 | 同步引擎 | 任务已取消 | 生效（internal/sync） |
+| 4006 | 同步引擎 | 部分目标失败 | 生效（internal/sync） |
+| 4007 | 同步引擎 | 推送中转 registry 失败 | 生效（internal/registry、internal/sync） |
