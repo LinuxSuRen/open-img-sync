@@ -10,8 +10,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/linuxsuren/open-img-sync/internal/aliyun"
 	"github.com/linuxsuren/open-img-sync/internal/sshx"
 	"github.com/linuxsuren/open-img-sync/internal/store"
+	"github.com/linuxsuren/open-img-sync/internal/sync"
+	webui "github.com/linuxsuren/open-img-sync/web"
 )
 
 // Options 聚合服务启动所需的注入项。
@@ -33,6 +36,10 @@ type Options struct {
 type Deps struct {
 	DB      *store.DB
 	Secrets *store.SecretBox
+	// Aliyun 临时凭据提供者（aliyun-temp 类型 registry 用，可为 nil）
+	Aliyun *aliyun.Provider
+	// Sync 同步引擎（任务接口用，可为 nil）
+	Sync *sync.Engine
 }
 
 // Server 持有路由与依赖。
@@ -87,6 +94,18 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("GET /api/registries/{id}/images", s.handleImageList)
 		s.mux.HandleFunc("DELETE /api/images/{id}", s.handleImageDelete)
 	}
+
+	if s.deps.Sync != nil {
+		_ = s.deps.DB.EnsureBuckets(bucketTasksAPI)
+		s.mux.HandleFunc("GET /api/tasks", s.handleTaskList)
+		s.mux.HandleFunc("POST /api/tasks", s.handleTaskCreate)
+		s.mux.HandleFunc("GET /api/tasks/{id}", s.handleTaskGet)
+		s.mux.HandleFunc("POST /api/tasks/{id}/cancel", s.handleTaskCancel)
+		s.mux.HandleFunc("GET /api/tasks/{id}/logs", s.handleTaskLogs)
+	}
+
+	// 前端静态资源（嵌入产物）兜底挂载：具体 /api 路由优先匹配
+	s.mux.Handle("/", webui.Handler())
 }
 
 // Handler 暴露路由（含中间件）供测试与上层复用。

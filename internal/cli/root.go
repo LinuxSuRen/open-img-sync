@@ -1,5 +1,4 @@
-// Package cli 承载子命令分发。骨架阶段提供 serve 与 version，
-// 其余子命令（self-check 等）随对应 issue 落地。
+// Package cli 承载子命令分发：serve（默认）、version、self-check。
 package cli
 
 import (
@@ -25,6 +24,8 @@ func Run(args []string) error {
 		return serve(args[1:])
 	case "version":
 		return printVersion()
+	case "self-check":
+		return selfCheck(args[1:])
 	default:
 		fs := flag.NewFlagSet("open-img-sync", flag.ContinueOnError)
 		showVersion := fs.Bool("version", false, "输出版本信息")
