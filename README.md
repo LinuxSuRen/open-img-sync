@@ -77,7 +77,8 @@ make release  # 五平台交叉编译 + 打包（tar.gz/zip 含 README/LICENSE�
 ## 协作约定
 
 - 功能开发一律 `feat/`、`fix/` 分支 + Pull Request，主分支受保护（禁直推、禁强推），合并由维护者执行
-- PR 描述须附验证证据（测试命令与输出）；涉及 UI 的改动须附页面截图
+- PR 描述须附验证证据（测试命令与输出）；涉及 UI 的改动须附页面截图（模板见 [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md)）
+- PR 打开即自动跑 [CI](.github/workflows/ci.yml)：gofmt/vet、`go test -race` 全量、前端构建与提交产物一致性校验、二进制构建 + Playwright 关键路径 e2e、镜像构建验证；`test` 为 required check（红灯在 review 前拦截）
 - 提交信息使用 Conventional Commits（中文描述）
 
 ## 许可证
