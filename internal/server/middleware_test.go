@@ -10,7 +10,7 @@ import (
 
 func authTarget(t *testing.T, token string) *Server {
 	t.Helper()
-	return New(Options{Version: "t", Token: token})
+	return New(Options{Version: "t", Token: token}, Deps{})
 }
 
 func TestAuthDisabledByDefault(t *testing.T) {
@@ -70,7 +70,7 @@ func TestHealthzExemptFromAuth(t *testing.T) {
 }
 
 func TestSystemInfoMasksNothing(t *testing.T) {
-	srv := New(Options{Version: "v1", DataDir: "/data", MasterKeySource: "file", Token: "tk"})
+	srv := New(Options{Version: "v1", DataDir: "/data", MasterKeySource: "file", Token: "tk"}, Deps{})
 	req := httptest.NewRequest(http.MethodGet, "/api/system/info", nil)
 	req.Header.Set("Authorization", "Bearer tk")
 	rec := httptest.NewRecorder()

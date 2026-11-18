@@ -37,7 +37,6 @@ func serve(args []string) error {
 	if err != nil {
 		return errs.Wrap(errs.CodeMasterKeyFail, "主密钥不可用", err)
 	}
-	_ = crypt.NewBox(key) // crypt 实例由资源层（#2/#3）消费，这里只完成装载校验
 
 	db, err := store.Open(*dataDir + string(os.PathSeparator) + "open-img-sync.db")
 	if err != nil {
@@ -52,6 +51,9 @@ func serve(args []string) error {
 		Token:           os.Getenv("OIS_TOKEN"),
 		DataDir:         *dataDir,
 		MasterKeySource: keySource,
+	}, server.Deps{
+		DB:      db,
+		Secrets: store.NewSecretBox(crypt.NewBox(key)),
 	})
 
 	httpSrv := &http.Server{

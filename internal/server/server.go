@@ -1,13 +1,17 @@
 // Package server 提供 Web + API 服务。
-// 骨架阶段提供 /healthz、/api/version 与系统信息接口；
-// 鉴权中间件（#10）已就绪，资源路由随 #2/#3/#5 接入。
+// 已接入：/healthz、/api/version、/api/system/info、服务器资源（#2）与鉴权中间件（#10）；
+// registry / 任务路由随 #3/#5 接入。
 package server
 
 import (
+	"context"
 	"log/slog"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/linuxsuren/open-img-sync/internal/sshx"
+	"github.com/linuxsuren/open-img-sync/internal/store"
 )
 
 // Options 聚合服务启动所需的注入项。
@@ -21,18 +25,38 @@ type Options struct {
 	DataDir string
 	// MasterKeySource 主密钥来源：env / file
 	MasterKeySource string
+	// TestTimeout 连通性测试超时（默认 10s，#2）
+	TestTimeout time.Duration
+}
+
+// Deps 服务器的持久化与加密依赖。
+type Deps struct {
+	DB      *store.DB
+	Secrets *store.SecretBox
 }
 
 // Server 持有路由与依赖。
 type Server struct {
-	opt  Options
-	mux  *http.ServeMux
-	http *http.Server
+	opt       Options
+	deps      Deps
+	mux       *http.ServeMux
+	http      *http.Server
+	sshTester func(ctx context.Context, opt sshx.Options) sshx.TestResult
+	now       func() time.Time
 }
 
 // New 构造服务实例。
-func New(opt Options) *Server {
-	s := &Server{opt: opt, mux: http.NewServeMux()}
+func New(opt Options, deps Deps) *Server {
+	if opt.TestTimeout <= 0 {
+		opt.TestTimeout = sshx.DefaultTimeout
+	}
+	s := &Server{
+		opt:       opt,
+		deps:      deps,
+		mux:       http.NewServeMux(),
+		sshTester: sshx.TestDocker,
+		now:       time.Now,
+	}
 	s.routes()
 	return s
 }
@@ -41,6 +65,18 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /healthz", s.handleHealthz)
 	s.mux.HandleFunc("GET /api/version", s.handleVersion)
 	s.mux.HandleFunc("GET /api/system/info", s.handleSystemInfo)
+
+	if s.deps.DB != nil {
+		_ = s.deps.DB.EnsureBuckets(bucketServers)
+		s.mux.HandleFunc("GET /api/servers", s.handleServerList)
+		s.mux.HandleFunc("POST /api/servers", s.handleServerCreate)
+		s.mux.HandleFunc("GET /api/servers/export", s.handleServerExport)
+		s.mux.HandleFunc("POST /api/servers/import", s.handleServerImport)
+		s.mux.HandleFunc("GET /api/servers/{id}", s.handleServerGet)
+		s.mux.HandleFunc("PUT /api/servers/{id}", s.handleServerUpdate)
+		s.mux.HandleFunc("DELETE /api/servers/{id}", s.handleServerDelete)
+		s.mux.HandleFunc("POST /api/servers/{id}/test", s.handleServerTest)
+	}
 }
 
 // Handler 暴露路由（含中间件）供测试与上层复用。
