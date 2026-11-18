@@ -46,6 +46,14 @@ make test     # go test -race ./...
 make web      # 需要 Node 20+：构建前端
 ```
 
+## 安全基线
+
+- 凭据（SSH 密码/私钥、registry 密码、阿里云 AK/SK）一律 **AES-256-GCM 加密**后落盘，库文件不含明文（标准库实现，无第三方加密依赖）
+- 主密钥优先级：环境变量 `OIS_MASTER_KEY`（base64 的 32 字节）> 首次启动自动生成 `数据目录/master.key`（0600）
+- 所有读接口凭据只回显掩码（如 `ssh-****`）与指纹，日志不落明文
+- 可选 Bearer 鉴权：设置环境变量 `OIS_TOKEN` 后，`/api/*` 需携带 `Authorization: Bearer <token>`，`/healthz` 豁免
+- 错误呈现三段式：稳定错误码 + 可读提示 + 技术根因（只进日志），段位表见 [docs/error-codes.md](docs/error-codes.md)
+
 ## 协作约定
 
 - 功能开发一律 `feat/`、`fix/` 分支 + Pull Request，主分支受保护（禁直推、禁强推），合并由维护者执行
