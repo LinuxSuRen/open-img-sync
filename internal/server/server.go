@@ -14,6 +14,7 @@ import (
 	"github.com/linuxsuren/open-img-sync/internal/sshx"
 	"github.com/linuxsuren/open-img-sync/internal/store"
 	"github.com/linuxsuren/open-img-sync/internal/sync"
+	webui "github.com/linuxsuren/open-img-sync/web"
 )
 
 // Options 聚合服务启动所需的注入项。
@@ -102,6 +103,9 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("POST /api/tasks/{id}/cancel", s.handleTaskCancel)
 		s.mux.HandleFunc("GET /api/tasks/{id}/logs", s.handleTaskLogs)
 	}
+
+	// 前端静态资源（嵌入产物）兜底挂载：具体 /api 路由优先匹配
+	s.mux.Handle("/", webui.Handler())
 }
 
 // Handler 暴露路由（含中间件）供测试与上层复用。

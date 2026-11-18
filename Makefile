@@ -9,10 +9,14 @@ LDFLAGS := -X github.com/linuxsuren/open-img-sync/internal/cli.version=$(VERSION
            -X github.com/linuxsuren/open-img-sync/internal/cli.buildTime=$(BUILDTIME)
 BINARY := bin/open-img-sync
 
-.PHONY: build test fmt vet clean
+.PHONY: build web test fmt vet clean
 
 build:
 	go build -trimpath -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd/open-img-sync
+
+# 需要 Node 20+：构建前端产物到 web/dist（产物已提交，纯 Go 环境无需执行本目标）
+web:
+	cd web && npm install && npm run build
 
 test:
 	go test -race ./...
@@ -24,4 +28,4 @@ vet:
 	go vet ./...
 
 clean:
-	rm -rf bin/
+	rm -rf bin/ web/dist

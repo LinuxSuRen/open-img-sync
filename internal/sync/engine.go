@@ -752,11 +752,12 @@ func (e *Engine) registryClient(reg model.RegistryRecord) (*registry.Client, err
 	}
 }
 
-// mapSourceError 把 registry 段错误映射为同步段语义（源 401 / 网络中断）。
+// mapSourceError 把 registry 段错误映射为同步段语义：源认证失败 → 4001、
+// 传输中断 → 4002；其余（网络不可达、引用不合法等）保持原错误码透出。
 func mapSourceError(err error) error {
 	biz := errs.From(err)
 	switch biz.Code {
-	case registry.CodeAuthFailed, registry.CodeUnreachable:
+	case registry.CodeAuthFailed:
 		return errs.Wrap(CodeSourceAuthFail, "源 registry 认证失败", biz.Cause())
 	case registry.CodeTransfer:
 		return errs.Wrap(CodeTransferStop, "传输中断", biz.Cause())

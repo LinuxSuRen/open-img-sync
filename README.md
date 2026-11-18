@@ -1,5 +1,7 @@
 # open-img-sync
 
+<p align="center"><img src="docs/logo.svg" width="120"></p>
+
 把 Docker 镜像同步到无法直连外网（或网络受限）的服务器，终结手动 `docker pull` → `docker save` → `scp` → `docker load` 的循环。
 
 ## 痛点
@@ -37,6 +39,14 @@
 - 存储：bbolt 单文件，所有凭据 AES-256-GCM 加密落盘
 
 架构决策（拉取位置、传输模式、模块划分、存储选型）与理由见 [docs/architecture.md](docs/architecture.md)；接口契约见 [docs/api-contract.md](docs/api-contract.md)；错误码段位表见 [docs/error-codes.md](docs/error-codes.md)。
+
+## 快速开始
+
+```bash
+make build && ./bin/open-img-sync        # 无参数等价于 serve，浏览器打开 http://127.0.0.1:8080
+```
+
+Web 管理界面已嵌入二进制：总览、服务器管理、镜像源与清单、同步任务（步骤级进度与日志）、系统信息五个页面，与 API 能力一一对应。
 
 ## 开发
 
