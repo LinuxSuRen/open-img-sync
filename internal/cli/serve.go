@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/linuxsuren/open-img-sync/internal/aliyun"
 	"github.com/linuxsuren/open-img-sync/internal/crypt"
 	"github.com/linuxsuren/open-img-sync/internal/errs"
 	"github.com/linuxsuren/open-img-sync/internal/server"
@@ -54,6 +55,7 @@ func serve(args []string) error {
 	}, server.Deps{
 		DB:      db,
 		Secrets: store.NewSecretBox(crypt.NewBox(key)),
+		Aliyun:  aliyun.NewProvider(store.NewSecretBox(crypt.NewBox(key))),
 	})
 
 	httpSrv := &http.Server{

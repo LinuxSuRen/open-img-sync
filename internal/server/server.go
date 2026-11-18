@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/linuxsuren/open-img-sync/internal/aliyun"
 	"github.com/linuxsuren/open-img-sync/internal/sshx"
 	"github.com/linuxsuren/open-img-sync/internal/store"
 )
@@ -33,6 +34,8 @@ type Options struct {
 type Deps struct {
 	DB      *store.DB
 	Secrets *store.SecretBox
+	// Aliyun 临时凭据提供者（aliyun-temp 类型 registry 用，可为 nil）
+	Aliyun *aliyun.Provider
 }
 
 // Server 持有路由与依赖。

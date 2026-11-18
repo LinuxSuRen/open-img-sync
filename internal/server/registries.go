@@ -238,6 +238,10 @@ func (s *Server) handleRegistryUpdate(w http.ResponseWriter, r *http.Request) {
 		s.writeErr(w, errs.Wrap(errs.CodeInternal, "保存失败", err))
 		return
 	}
+	// 凭据可能已变更：失效该实例的临时凭据缓存（#4）
+	if s.deps.Aliyun != nil {
+		s.deps.Aliyun.Invalidate(rec.ID)
+	}
 	writeJSON(w, http.StatusOK, registryView(rec))
 }
 
@@ -283,7 +287,18 @@ func (s *Server) handleRegistryTest(w http.ResponseWriter, r *http.Request) {
 		}
 		secret = plain
 	case model.RegistryTypeAliyunTemp:
-		// 临时凭据路径随 #4 接入；当前匿名探测可达性
+		// 临时凭据路径：AK/SK 换取临时用户名密码后探测（#4）
+		if s.deps.Aliyun == nil {
+			s.writeErr(w, errs.New(errs.CodeInternal, "临时凭据提供者未配置"))
+			return
+		}
+		tok, err := s.deps.Aliyun.Fetch(r.Context(), rec)
+		if err != nil {
+			fetchErr := errs.From(err)
+			writeJSON(w, http.StatusOK, registry.PingResult{OK: false, Code: fetchErr.Code, Message: fetchErr.Message})
+			return
+		}
+		username, secret = tok.Username, tok.Password
 	}
 	res := registry.Ping(rec.Address, username, secret)
 	slog.Info("registry test", "registry_id", rec.ID, "code", res.Code) // 不落任何凭据
