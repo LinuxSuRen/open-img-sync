@@ -24,10 +24,10 @@
 | 5003 | 系统 | 资源不存在 | 生效（internal/errs） |
 | 5004 | 系统 | 未授权的请求 | 生效（internal/server 鉴权中间件） |
 | 5005 | 系统 | 主密钥不可用 | 生效（internal/crypt、internal/store） |
-| 1001 | 凭据服务 | 阿里云 AccessKey 无效 | 规划 |
-| 1002 | 凭据服务 | AccessKey 未授权该 ACR 实例 | 规划 |
-| 1003 | 凭据服务 | 阿里云接口限流，请稍后重试 | 规划 |
-| 1004 | 凭据服务 | 临时凭据获取失败 | 规划 |
+| 1001 | 凭据服务 | 阿里云 AccessKey 无效 | 生效（internal/aliyun） |
+| 1002 | 凭据服务 | AccessKey 未授权该 ACR 实例 | 生效（internal/aliyun） |
+| 1003 | 凭据服务 | 阿里云接口限流，请稍后重试 | 生效（internal/aliyun） |
+| 1004 | 凭据服务 | 临时凭据获取失败 | 生效（internal/aliyun） |
 | 2001 | 服务器 | 服务器不可达 | 生效（internal/sshx） |
 | 2002 | 服务器 | SSH 认证失败 | 生效（internal/sshx） |
 | 2003 | 服务器 | 目标机 Docker 不可用 | 生效（internal/sshx） |
