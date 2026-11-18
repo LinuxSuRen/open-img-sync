@@ -1,0 +1,19 @@
+# local tool caches
+.cache/
+
+# build outputs
+bin/
+build/
+dist/
+
+# frontend
+web/node_modules/
+
+# runtime scratch
+*.log
+*.db
+
+# editors / OS
+.idea/
+.vscode/
+.DS_Store
