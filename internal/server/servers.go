@@ -129,7 +129,12 @@ func (s *Server) handleServerList(w http.ResponseWriter, r *http.Request) {
 		s.writeErr(w, errs.Wrap(errs.CodeInternal, "读取失败", err))
 		return
 	}
-	sort.Slice(records, func(i, j int) bool { return records[i].CreatedAt.Before(records[j].CreatedAt) })
+	sort.Slice(records, func(i, j int) bool {
+		if !records[i].CreatedAt.Equal(records[j].CreatedAt) {
+			return records[i].CreatedAt.Before(records[j].CreatedAt)
+		}
+		return records[i].ID < records[j].ID
+	})
 	total := len(records)
 	start := (page.Page - 1) * page.PageSize
 	if start > total {

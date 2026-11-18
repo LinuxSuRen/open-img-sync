@@ -10,8 +10,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/linuxsuren/open-img-sync/internal/aliyun"
 	"github.com/linuxsuren/open-img-sync/internal/sshx"
 	"github.com/linuxsuren/open-img-sync/internal/store"
+	"github.com/linuxsuren/open-img-sync/internal/sync"
 )
 
 // Options 聚合服务启动所需的注入项。
@@ -33,6 +35,10 @@ type Options struct {
 type Deps struct {
 	DB      *store.DB
 	Secrets *store.SecretBox
+	// Aliyun 临时凭据提供者（aliyun-temp 类型 registry 用，可为 nil）
+	Aliyun *aliyun.Provider
+	// Sync 同步引擎（任务接口用，可为 nil）
+	Sync *sync.Engine
 }
 
 // Server 持有路由与依赖。
@@ -67,7 +73,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/system/info", s.handleSystemInfo)
 
 	if s.deps.DB != nil {
-		_ = s.deps.DB.EnsureBuckets(bucketServers)
+		_ = s.deps.DB.EnsureBuckets(bucketServers, bucketRegistries, bucketImages)
 		s.mux.HandleFunc("GET /api/servers", s.handleServerList)
 		s.mux.HandleFunc("POST /api/servers", s.handleServerCreate)
 		s.mux.HandleFunc("GET /api/servers/export", s.handleServerExport)
@@ -76,6 +82,25 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("PUT /api/servers/{id}", s.handleServerUpdate)
 		s.mux.HandleFunc("DELETE /api/servers/{id}", s.handleServerDelete)
 		s.mux.HandleFunc("POST /api/servers/{id}/test", s.handleServerTest)
+
+		s.mux.HandleFunc("GET /api/registries", s.handleRegistryList)
+		s.mux.HandleFunc("POST /api/registries", s.handleRegistryCreate)
+		s.mux.HandleFunc("GET /api/registries/{id}", s.handleRegistryGet)
+		s.mux.HandleFunc("PUT /api/registries/{id}", s.handleRegistryUpdate)
+		s.mux.HandleFunc("DELETE /api/registries/{id}", s.handleRegistryDelete)
+		s.mux.HandleFunc("POST /api/registries/{id}/test", s.handleRegistryTest)
+		s.mux.HandleFunc("POST /api/registries/{id}/images/batch", s.handleImageBatch)
+		s.mux.HandleFunc("GET /api/registries/{id}/images", s.handleImageList)
+		s.mux.HandleFunc("DELETE /api/images/{id}", s.handleImageDelete)
+	}
+
+	if s.deps.Sync != nil {
+		_ = s.deps.DB.EnsureBuckets(bucketTasksAPI)
+		s.mux.HandleFunc("GET /api/tasks", s.handleTaskList)
+		s.mux.HandleFunc("POST /api/tasks", s.handleTaskCreate)
+		s.mux.HandleFunc("GET /api/tasks/{id}", s.handleTaskGet)
+		s.mux.HandleFunc("POST /api/tasks/{id}/cancel", s.handleTaskCancel)
+		s.mux.HandleFunc("GET /api/tasks/{id}/logs", s.handleTaskLogs)
 	}
 }
 
