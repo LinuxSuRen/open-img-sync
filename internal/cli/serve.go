@@ -86,12 +86,23 @@ func serve(args []string) error {
 	case err := <-errCh:
 		return err
 	case <-ctx.Done():
+		// 优雅退出：停止接收新连接 → 等待在途请求 → 排空运行中的同步任务（有超时上限，#8）
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
 		if err := httpSrv.Shutdown(shutdownCtx); err != nil {
 			return fmt.Errorf("优雅退出失败: %w", err)
 		}
-		slog.Info("server stopped gracefully")
+		drainTimeout := 30 * time.Second
+		if raw := os.Getenv("OIS_SHUTDOWN_DRAIN_TIMEOUT"); raw != "" {
+			if d, err := time.ParseDuration(raw); err == nil && d > 0 {
+				drainTimeout = d
+			}
+		}
+		if syncEngine.Drain(drainTimeout) {
+			slog.Info("server stopped gracefully")
+		} else {
+			slog.Warn("server stopped with running tasks aborted", "drain_timeout", drainTimeout.String())
+		}
 		return nil
 	}
 }

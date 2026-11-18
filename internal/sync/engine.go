@@ -810,6 +810,25 @@ func (e *Engine) findImageByRef(ref string) (model.ImageRecord, bool) {
 	return found, ok
 }
 
+// Drain 等待运行中的任务全部结束（优雅退出用，#8）；
+// 超时返回 false（剩余任务随进程退出中止）。
+func (e *Engine) Drain(timeout time.Duration) bool {
+	deadline := time.Now().Add(timeout)
+	for {
+		e.mu.Lock()
+		n := len(e.running)
+		e.mu.Unlock()
+		if n == 0 {
+			return true
+		}
+		if time.Now().After(deadline) {
+			slog.Warn("graceful drain timeout", "running_tasks", n)
+			return false
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+}
+
 // logBuffer 环形日志缓冲（最近 1000 行）。
 type logBuffer struct {
 	mu    sync.Mutex

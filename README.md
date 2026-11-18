@@ -61,6 +61,9 @@ make release  # 五平台交叉编译 + 打包（tar.gz/zip 含 README/LICENSE�
 
 - CLI 子命令：`serve`（默认，无参数等价）与 `version`（`--version` 等价并存）
 - tag（`v*`）创建 Release 后自动触发 [release workflow](.github/workflows/release.yml)：linux/darwin × amd64/arm64 + windows/amd64 五平台静态二进制，打包附 README、LICENSE 与 sha256 校验，统一上传到该 Release
+- 同一 Release 事件并行触发 [docker workflow](.github/workflows/docker-publish.yml)：多架构镜像（linux/amd64 + arm64）推送 GHCR `ghcr.io/linuxsuren/open-img-sync`，与二进制**同版本同源**（同 tag 注入 VERSION）。GHCR 包首次推送后默认私有，如需公开：GitHub 仓库 → Packages → 该包 → Package settings → Change visibility
+- 镜像标签策略：`latest` 仅正式版；语义化三级（`v1.2.3` / `1.2` / `1`）；`sha-<短哈希>`
+- 容器运行：scratch 基础层、非 root、内置 `self-check` 健康探测（HEALTHCHECK 不依赖 wget/curl）、SIGTERM 优雅排空；加固 compose 示例见 [compose.yml](compose.yml)（read_only + tmpfs + no-new-privileges + 资源上限）
 - 版本注入走 ldflags（`git describe` 同源），`version` 子命令与 `/api/version` 输出一致
 
 ## 安全基线
