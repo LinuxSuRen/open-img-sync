@@ -54,7 +54,14 @@ Web 管理界面已嵌入二进制：总览、服务器管理、镜像源与清�
 make build    # 纯 Go 环境：编译 bin/open-img-sync（前端产物已提交，无需 Node）
 make test     # go test -race ./...
 make web      # 需要 Node 20+：构建前端
+make release  # 五平台交叉编译 + 打包（tar.gz/zip 含 README/LICENSE）+ sha256
 ```
+
+## 发布
+
+- CLI 子命令：`serve`（默认，无参数等价）与 `version`（`--version` 等价并存）
+- tag（`v*`）创建 Release 后自动触发 [release workflow](.github/workflows/release.yml)：linux/darwin × amd64/arm64 + windows/amd64 五平台静态二进制，打包附 README、LICENSE 与 sha256 校验，统一上传到该 Release
+- 版本注入走 ldflags（`git describe` 同源），`version` 子命令与 `/api/version` 输出一致
 
 ## 安全基线
 
