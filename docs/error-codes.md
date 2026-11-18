@@ -32,10 +32,10 @@
 | 2002 | 服务器 | SSH 认证失败 | 生效（internal/sshx） |
 | 2003 | 服务器 | 目标机 Docker 不可用 | 生效（internal/sshx） |
 | 2004 | 服务器 | 连接超时 | 生效（internal/sshx） |
-| 3001 | registry | registry 网络不可达 | 规划 |
-| 3002 | registry | registry 认证失败 | 规划 |
-| 3003 | registry | 目标不是 registry 服务 | 规划 |
-| 3004 | registry | 镜像引用不合法 | 规划 |
+| 3001 | registry | registry 网络不可达 | 生效（internal/registry） |
+| 3002 | registry | registry 认证失败 | 生效（internal/registry） |
+| 3003 | registry | 目标不是 registry 服务 | 生效（internal/registry） |
+| 3004 | registry | 镜像引用不合法 | 生效（internal/registry） |
 | 4001 | 同步引擎 | 源 registry 认证失败 | 规划 |
 | 4002 | 同步引擎 | 传输中断 | 规划 |
 | 4003 | 同步引擎 | 目标机磁盘已满 | 规划 |

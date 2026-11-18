@@ -67,7 +67,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/system/info", s.handleSystemInfo)
 
 	if s.deps.DB != nil {
-		_ = s.deps.DB.EnsureBuckets(bucketServers)
+		_ = s.deps.DB.EnsureBuckets(bucketServers, bucketRegistries, bucketImages)
 		s.mux.HandleFunc("GET /api/servers", s.handleServerList)
 		s.mux.HandleFunc("POST /api/servers", s.handleServerCreate)
 		s.mux.HandleFunc("GET /api/servers/export", s.handleServerExport)
@@ -76,6 +76,16 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("PUT /api/servers/{id}", s.handleServerUpdate)
 		s.mux.HandleFunc("DELETE /api/servers/{id}", s.handleServerDelete)
 		s.mux.HandleFunc("POST /api/servers/{id}/test", s.handleServerTest)
+
+		s.mux.HandleFunc("GET /api/registries", s.handleRegistryList)
+		s.mux.HandleFunc("POST /api/registries", s.handleRegistryCreate)
+		s.mux.HandleFunc("GET /api/registries/{id}", s.handleRegistryGet)
+		s.mux.HandleFunc("PUT /api/registries/{id}", s.handleRegistryUpdate)
+		s.mux.HandleFunc("DELETE /api/registries/{id}", s.handleRegistryDelete)
+		s.mux.HandleFunc("POST /api/registries/{id}/test", s.handleRegistryTest)
+		s.mux.HandleFunc("POST /api/registries/{id}/images/batch", s.handleImageBatch)
+		s.mux.HandleFunc("GET /api/registries/{id}/images", s.handleImageList)
+		s.mux.HandleFunc("DELETE /api/images/{id}", s.handleImageDelete)
 	}
 }
 
